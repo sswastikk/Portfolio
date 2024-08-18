@@ -1,1 +1,29 @@
-<h1>Github page<h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">   
+
+    <title>Portfolio   
+ de César (Swastik) - Consola Interactiva con Efectos Especiales, Reloj, Sol y Dinero Flotante</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="matrix-bg"></canvas>
+    <div id="clock" class="glow-text"></div>
+    <div id="terminal">
+        <div id="output"></div>
+        <div id="input-line">
+            <span id="prompt" class="glow-text">swastik@portfolio:~$</span>
+            <input type="text" id="command-input" autofocus>
+        </div>
+    </div>
+    <div id="sun-container">
+        <div id="sun"></div>
+    </div>
+    <audio id="keySound" src="https://websimai.com/cesar-swastik-portfolio/sounds/key.mp3"></audio>
+    <audio id="enterSound" src="https://websimai.com/cesar-swastik-portfolio/sounds/enter.mp3"></audio>
+    <audio id="errorSound" src="https://websimai.com/cesar-swastik-portfolio/sounds/error.mp3"></audio>
+    <script src="script.js"></script>
+</body>
+</html>
