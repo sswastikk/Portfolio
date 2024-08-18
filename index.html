@@ -1,29 +1,325 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">   
-
-    <title>Portfolio   
- de César (Swastik) - Consola Interactiva con Efectos Especiales, Reloj, Sol y Dinero Flotante</title>
-    <link rel="stylesheet" href="style.css">
+<html><head><base href="https://websimai.com/cesar-swastik-portfolio/">
+<meta charset="UTF-8">
+<title>Portfolio de César (Swastik) - Consola Interactiva con Efectos Especiales, Reloj, Sol y Dinero Flotante</title>
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Courier New', monospace;
+    background-color: #000;
+    color: #0f0;
+    overflow: hidden;
+  }
+  #terminal {
+    height: 100%;
+    overflow-y: auto;
+    padding: 20px;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+  }
+  #output {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  #input-line {
+    display: flex;
+    align-items: center;
+  }
+  #prompt {
+    color: #0f0;
+    margin-right: 10px;
+  }
+  #command-input {
+    flex-grow: 1;
+    background-color: transparent;
+    border: none;
+    color: #0f0;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    outline: none;
+  }
+  .command {
+    color: #ff0;
+  }
+  .error {
+    color: #f00;
+  }
+  #matrix-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    opacity: 0.1;
+  }
+  @keyframes glow {
+    0% { text-shadow: 0 0 5px #0f0; }
+    50% { text-shadow: 0 0 20px #0f0, 0 0 30px #0f0; }
+    100% { text-shadow: 0 0 5px #0f0; }
+  }
+  .glow-text {
+    animation: glow 2s infinite;
+  }
+  #clock {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    font-size: 20px;
+    color: #0f0;
+    z-index: 2;
+  }
+  #sun-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    display: none;
+  }
+  #sun {
+    width: 100px;
+    height: 100px;
+    background: #FFD700;
+    border-radius: 50%;
+    box-shadow: 0 0 50px #FFD700;
+    animation: pulse 2s infinite alternate;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.1); }
+  }
+  .money {
+    position: absolute;
+    font-size: 24px;
+    pointer-events: none;
+    user-select: none;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  @keyframes float {
+    0% { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(-100vh) rotate(360deg); }
+  }
+</style>
 </head>
 <body>
-    <canvas id="matrix-bg"></canvas>
-    <div id="clock" class="glow-text"></div>
-    <div id="terminal">
-        <div id="output"></div>
-        <div id="input-line">
-            <span id="prompt" class="glow-text">swastik@portfolio:~$</span>
-            <input type="text" id="command-input" autofocus>
-        </div>
-    </div>
-    <div id="sun-container">
-        <div id="sun"></div>
-    </div>
-    <audio id="keySound" src="https://websimai.com/cesar-swastik-portfolio/sounds/key.mp3"></audio>
-    <audio id="enterSound" src="https://websimai.com/cesar-swastik-portfolio/sounds/enter.mp3"></audio>
-    <audio id="errorSound" src="https://websimai.com/cesar-swastik-portfolio/sounds/error.mp3"></audio>
-    <script src="script.js"></script>
+<canvas id="matrix-bg"></canvas>
+<div id="clock" class="glow-text"></div>
+<div id="terminal">
+  <div id="output"></div>
+  <div id="input-line">
+    <span id="prompt" class="glow-text">swastik@portfolio:~$</span>
+    <input type="text" id="command-input" autofocus>
+  </div>
+</div>
+<div id="sun-container">
+  <div id="sun"></div>
+</div>
+
+<audio id="keySound" src="https://websimai.com/cesar-swastik-portfolio/sounds/key.mp3"></audio>
+<audio id="enterSound" src="https://websimai.com/cesar-swastik-portfolio/sounds/enter.mp3"></audio>
+<audio id="errorSound" src="https://websimai.com/cesar-swastik-portfolio/sounds/error.mp3"></audio>
+
+<script>
+const output = document.getElementById('output');
+const commandInput = document.getElementById('command-input');
+const keySound = document.getElementById('keySound');
+const enterSound = document.getElementById('enterSound');
+const errorSound = document.getElementById('errorSound');
+const clockElement = document.getElementById('clock');
+const sunContainer = document.getElementById('sun-container');
+
+const commands = {
+  help: `Comandos disponibles:
+  help     - Muestra esta lista de comandos
+  clear    - Limpia la pantalla
+  about    - Muestra información sobre mí
+  skills   - Muestra mis habilidades técnicas
+  projects - Muestra mis proyectos
+  contact  - Muestra mi información de contacto
+  matrix   - Activa/desactiva el efecto matrix
+  time     - Muestra la hora actual
+  sun      - Muestra un sol brillante
+  money    - Hace que aparezca dinero flotante`,
+  
+  about: `¡Hola! Soy César, también conocido como Swastik.
+Soy un desarrollador apasionado por la tecnología y la programación.
+Me especializo en HTML, CSS, Java y JavaScript.`,
+  
+  skills: `Mis habilidades técnicas incluyen:
+• HTML5
+• CSS3
+• Java
+• JavaScript
+• Desarrollo web frontend
+• Desarrollo de aplicaciones Java
+• Control de versiones con Git`,
+  
+  projects: `Algunos de mis proyectos destacados:
+1. Sistema de gestión de inventario (Java)
+2. Página web responsiva para un restaurante local (HTML, CSS, JavaScript)
+3. Aplicación de lista de tareas (JavaScript, HTML, CSS)
+4. API RESTful para un blog (Java Spring Boot)`,
+  
+  contact: `Puedes contactarme a través de:
+• Email: cesar10hp2@gmail.com
+• Discord: vasiloxyz`,
+  
+  clear: function() {
+    output.innerHTML = '';
+  },
+  
+  matrix: function() {
+    const canvas = document.getElementById('matrix-bg');
+    if (canvas.style.opacity === '0.1') {
+      canvas.style.opacity = '0';
+      return "Efecto matrix desactivado";
+    } else {
+      canvas.style.opacity = '0.1';
+      return "Efecto matrix activado";
+    }
+  },
+
+  time: function() {
+    const now = new Date();
+    return `La hora actual es: ${now.toLocaleTimeString()}`;
+  },
+
+  sun: function() {
+    sunContainer.style.display = 'block';
+    setTimeout(() => {
+      sunContainer.style.display = 'none';
+    }, 5000);
+    return "¡Mostrando un sol brillante! Desaparecerá en 5 segundos.";
+  },
+
+  money: function() {
+    createFloatingMoney();
+    return "¡Dinero flotante activado!";
+  }
+};
+
+function executeCommand(cmd) {
+  const [command, ...args] = cmd.toLowerCase().trim().split(' ');
+  output.innerHTML += `<span class="command">${cmd}</span>\n`;
+  
+  if (commands.hasOwnProperty(command)) {
+    enterSound.currentTime = 0;
+    enterSound.play();
+    if (typeof commands[command] === 'function') {
+      const result = commands[command](args);
+      if (result) {
+        output.innerHTML += result + '\n\n';
+      }
+    } else {
+      output.innerHTML += commands[command] + '\n\n';
+    }
+  } else {
+    errorSound.currentTime = 0;
+    errorSound.play();
+    output.innerHTML += `<span class="error">Comando no reconocido: ${command}. Escribe 'help' para ver la lista de comandos disponibles.</span>\n\n`;
+  }
+}
+
+commandInput.addEventListener('keydown', function(event) {
+  if (event.key !== 'Enter') {
+    keySound.currentTime = 0;
+    keySound.play();
+  }
+});
+
+commandInput.addEventListener('keyup', function(event) {
+  if (event.key === 'Enter') {
+    const command = this.value;
+    executeCommand(command);
+    this.value = '';
+    output.scrollTop = output.scrollHeight;
+  }
+});
+
+// Efecto Matrix
+const canvas = document.getElementById('matrix-bg');
+const ctx = canvas.getContext('2d');
+
+canvas.height = window.innerHeight;
+canvas.width = window.innerWidth;
+
+const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
+const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const nums = '0123456789';
+
+const alphabet = katakana + latin + nums;
+
+const fontSize = 16;
+const columns = canvas.width / fontSize;
+
+const rainDrops = [];
+
+for (let x = 0; x < columns; x++) {
+  rainDrops[x] = 1;
+}
+
+function draw() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#0F0';
+  ctx.font = fontSize + 'px monospace';
+
+  for (let i = 0; i < rainDrops.length; i++) {
+    const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+    ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
+
+    if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+      rainDrops[i] = 0;
+    }
+    rainDrops[i]++;
+  }
+}
+
+setInterval(draw, 30);
+
+// Reloj
+function updateClock() {
+  const now = new Date();
+  clockElement.textContent = now.toLocaleTimeString();
+}
+
+setInterval(updateClock, 1000);
+updateClock(); // Actualizar inmediatamente
+
+// Dinero flotante
+function createFloatingMoney() {
+  const moneySymbols = ['💰', '💵', '💶', '💷', '💸', '🤑'];
+  const terminal = document.getElementById('terminal');
+
+  for (let i = 0; i < 20; i++) {
+    setTimeout(() => {
+      const money = document.createElement('div');
+      money.textContent = moneySymbols[Math.floor(Math.random() * moneySymbols.length)];
+      money.className = 'money';
+      money.style.left = `${Math.random() * 100}%`;
+      money.style.animation = `float ${5 + Math.random() * 5}s linear`;
+      terminal.appendChild(money);
+
+      money.style.opacity = '1';
+
+      money.addEventListener('animationend', () => {
+        terminal.removeChild(money);
+      });
+    }, i * 200);
+  }
+}
+
+// Mensaje de bienvenida
+output.innerHTML = `<span class="glow-text">Bienvenido a mi portfolio interactivo Cesar (Swastik)</span>
+Escribe 'help' para ver la lista de comandos disponibles.
+
+`;
+</script>
 </body>
 </html>
